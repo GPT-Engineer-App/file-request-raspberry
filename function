@@ -1,0 +1,32 @@
+import socket
+
+def file_request_raspberry(HOSTS, PORT, SAVE_PATH):
+    print("Richiesta file raspberry")
+    output_messages = ""  # Stringa per memorizzare i messaggi di output
+    status_file = []  # Matrice per memorizzare lo stato per ogni host
+
+    for host in HOSTS:  # Itera su ogni host nella lista HOSTS
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((host, PORT))
+                print(f"Connesso al server {host}:{PORT}")
+                output_messages += f"Connesso al server {host}:{PORT}\n"
+                s.sendall(b'SEND FILE')
+                file_path = SAVE_PATH + f'received_file_{host}.txt'  # nome che viene dato al file quando viene ricevuto
+                with open(file_path, 'wb') as f:
+                    while True:
+                        data = s.recv(1024)
+                        if not data:
+                            break
+                        f.write(data)
+                print(f'File ricevuto e salvato con successo su {file_path}')
+                output_messages += f'File ricevuto e salvato con successo su {file_path}\n'
+                status = 1  # se ricevo il file, dizionario
+                status_file.append([host, status])
+        except Exception as e:
+            print(f"Errore durante la richiesta del file da {host}: {e}")
+            output_messages += f"Errore durante la richiesta del file da {host}: {e}\n"
+            status = 0
+            status_file.append([host, status])
+
+    return status_file, output_messages
